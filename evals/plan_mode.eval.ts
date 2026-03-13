@@ -16,7 +16,14 @@ describe('plan_mode', () => {
   const TEST_PREFIX = 'Plan Mode: ';
   const settings = {
     experimental: { plan: true },
+    policyPaths: ['.gemini/policies'],
   };
+
+  const planPolicy = `[[rule]]
+toolName = ["enter_plan_mode", "exit_plan_mode"]
+decision = "allow"
+priority = 100
+`;
 
   evalTest('ALWAYS_PASSES', {
     name: 'should refuse file modification when in plan mode',
@@ -104,6 +111,9 @@ describe('plan_mode', () => {
     params: {
       settings,
     },
+    files: {
+      '.gemini/policies/plan.toml': planPolicy,
+    },
     prompt:
       'I need to build a complex new feature for user authentication. Please create a detailed implementation plan.',
     assert: async (rig, result) => {
@@ -124,6 +134,7 @@ describe('plan_mode', () => {
     files: {
       'plans/my-plan.md':
         '# My Implementation Plan\n\n1. Step one\n2. Step two',
+      '.gemini/policies/plan.toml': planPolicy,
     },
     prompt:
       'The plan in plans/my-plan.md looks solid. Start the implementation.',
