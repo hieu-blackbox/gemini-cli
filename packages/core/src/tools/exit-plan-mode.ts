@@ -7,20 +7,21 @@
 import {
   BaseDeclarativeTool,
   BaseToolInvocation,
-  type ToolResult,
   Kind,
-  type ToolExitPlanModeConfirmationDetails,
-  type ToolConfirmationPayload,
-  type ToolExitPlanModeConfirmationPayload,
   ToolConfirmationOutcome,
+  type ToolConfirmationPayload,
+  type ToolExitPlanModeConfirmationDetails,
+  type ToolExitPlanModeConfirmationPayload,
+  type ToolResult,
 } from './tools.js';
+import { ToolErrorType } from './tool-error.js';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
 import path from 'node:path';
 import type { Config } from '../config/config.js';
 import { EXIT_PLAN_MODE_TOOL_NAME } from './tool-names.js';
-import { validatePlanPath, validatePlanContent } from '../utils/planUtils.js';
+import { validatePlanContent, validatePlanPath } from '../utils/planUtils.js';
 import { ApprovalMode } from '../policy/types.js';
-import { resolveToRealPath, isSubpath } from '../utils/paths.js';
+import { isSubpath, resolveToRealPath } from '../utils/paths.js';
 import { logPlanExecution } from '../telemetry/loggers.js';
 import { PlanExecutionEvent } from '../telemetry/types.js';
 import { getExitPlanModeDefinition } from './definitions/coreTools.js';
@@ -203,19 +204,35 @@ export class ExitPlanModeInvocation extends BaseToolInvocation<
       };
     }
 
+    const prePlanMode = this.config.getPrePlanApprovalMode();
+    if (
+      !this.config.interactive &&
+      (prePlanMode === undefined || prePlanMode === ApprovalMode.PLAN)
+    ) {
+      const msg =
+        'Plan approved and exported successfully. Exiting non-interactive session.';
+      return {
+        llmContent: msg,
+        returnDisplay: `Plan exported: ${resolvedPlanPath}`,
+        error: {
+          message: msg,
+          type: ToolErrorType.STOP_EXECUTION,
+        },
+      };
+    }
+
     // When a user policy grants `allow` for exit_plan_mode, the scheduler
     // skips the confirmation phase entirely and shouldConfirmExecute is never
-    // called, leaving approvalPayload null.  Treat that as an approval with
-    // the default mode — consistent with the ALLOW branch inside
-    // shouldConfirmExecute.
+    // called, leaving approvalPayload null. Treat that as an approval with
+    // the mode before plan mode.
     const payload = this.approvalPayload ?? {
       approved: true,
-      approvalMode: ApprovalMode.DEFAULT,
+      approvalMode: prePlanMode,
     };
     if (payload.approved) {
       const newMode = payload.approvalMode ?? ApprovalMode.DEFAULT;
 
-      if (newMode === ApprovalMode.PLAN || newMode === ApprovalMode.YOLO) {
+      if (newMode === ApprovalMode.PLAN) {
         throw new Error(`Unexpected approval mode: ${newMode}`);
       }
 

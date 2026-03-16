@@ -16,6 +16,7 @@ import * as fs from 'node:fs';
 import os from 'node:os';
 import { validatePlanPath } from '../utils/planUtils.js';
 import * as loggers from '../telemetry/loggers.js';
+import { ToolErrorType } from './tool-error.js';
 
 vi.mock('../telemetry/loggers.js', () => ({
   logPlanExecution: vi.fn(),
@@ -41,6 +42,8 @@ describe('ExitPlanModeTool', () => {
     mockPlansDir = fs.realpathSync(plansDirRaw);
 
     mockConfig = {
+      interactive: true,
+      getPrePlanApprovalMode: vi.fn().mockReturnValue(undefined),
       getTargetDir: vi.fn().mockReturnValue(tempRootDir),
       setApprovalMode: vi.fn(),
       setApprovedPlanPath: vi.fn(),
@@ -339,6 +342,30 @@ Ask the user for specific feedback on how to improve the plan.`,
     });
   });
 
+  describe('execute in non-interactive mode', () => {
+    it('should return STOP_EXECUTION error when non-interactive and prePlanMode is undefined', async () => {
+      (mockConfig.interactive as boolean) = false;
+      vi.mocked(mockConfig.getPrePlanApprovalMode!).mockReturnValue(undefined);
+
+      const planRelativePath = createPlanFile('test.md', '# Content');
+      const invocation = tool.build({ plan_path: planRelativePath });
+
+      const result = await invocation.execute(new AbortController().signal);
+      const expectedPath = path.join(mockPlansDir, 'test.md');
+
+      expect(result).toEqual({
+        llmContent:
+          'Plan approved and exported successfully. Exiting non-interactive session.',
+        returnDisplay: `Plan exported: ${expectedPath}`,
+        error: {
+          message:
+            'Plan approved and exported successfully. Exiting non-interactive session.',
+          type: ToolErrorType.STOP_EXECUTION,
+        },
+      });
+    });
+  });
+
   describe('execute when shouldConfirmExecute is never called', () => {
     it('should approve with DEFAULT mode when approvalPayload is null (policy ALLOW skips confirmation)', async () => {
       const planRelativePath = createPlanFile('test.md', '# Content');
@@ -354,6 +381,23 @@ Ask the user for specific feedback on how to improve the plan.`,
       expect(result.returnDisplay).toContain('Plan approved');
       expect(mockConfig.setApprovalMode).toHaveBeenCalledWith(
         ApprovalMode.DEFAULT,
+      );
+      expect(mockConfig.setApprovedPlanPath).toHaveBeenCalledWith(expectedPath);
+    });
+
+    it('should use pre-plan approval mode when approvalPayload is null', async () => {
+      const planRelativePath = createPlanFile('test.md', '# Content');
+      const invocation = tool.build({ plan_path: planRelativePath });
+      vi.mocked(mockConfig.getPrePlanApprovalMode!).mockReturnValue(
+        ApprovalMode.AUTO_EDIT,
+      );
+
+      const result = await invocation.execute(new AbortController().signal);
+      const expectedPath = path.join(mockPlansDir, 'test.md');
+
+      expect(result.llmContent).toContain('Plan approved');
+      expect(mockConfig.setApprovalMode).toHaveBeenCalledWith(
+        ApprovalMode.AUTO_EDIT,
       );
       expect(mockConfig.setApprovedPlanPath).toHaveBeenCalledWith(expectedPath);
     });
@@ -378,6 +422,11 @@ Ask the user for specific feedback on how to improve the plan.`,
         const result = await invocation.execute(new AbortController().signal);
         expect(result.llmContent).toContain(expected);
       };
+
+      await testMode(
+        ApprovalMode.YOLO,
+        'YOLO mode (all tool calls auto-approved)',
+      );
 
       await testMode(
         ApprovalMode.AUTO_EDIT,
@@ -409,7 +458,6 @@ Ask the user for specific feedback on how to improve the plan.`,
         ).rejects.toThrow(/Unexpected approval mode/);
       };
 
-      await testInvalidMode(ApprovalMode.YOLO);
       await testInvalidMode(ApprovalMode.PLAN);
     });
   });

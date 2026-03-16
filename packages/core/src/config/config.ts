@@ -646,6 +646,7 @@ export interface ConfigParameters {
 }
 
 export class Config implements McpContext, AgentLoopContext {
+  private _prePlanApprovalMode?: ApprovalMode;
   private _toolRegistry!: ToolRegistry;
   private mcpClientManager?: McpClientManager;
   private allowedMcpServers: string[];
@@ -2138,6 +2139,10 @@ export class Config implements McpContext, AgentLoopContext {
     return this.policyEngine.getApprovalMode();
   }
 
+  getPrePlanApprovalMode(): ApprovalMode | undefined {
+    return this._prePlanApprovalMode;
+  }
+
   getPolicyUpdateConfirmationRequest():
     | PolicyUpdateConfirmationRequest
     | undefined {
@@ -2187,6 +2192,12 @@ export class Config implements McpContext, AgentLoopContext {
         this,
         new ApprovalModeSwitchEvent(currentMode, mode),
       );
+
+      if (mode === ApprovalMode.PLAN) {
+        this._prePlanApprovalMode = currentMode;
+      } else {
+        this._prePlanApprovalMode = undefined;
+      }
     }
 
     this.policyEngine.setApprovalMode(mode);
