@@ -52,4 +52,5 @@ export interface CoreToolSet {
   record_learning: FunctionDeclaration;
   record_decision: FunctionDeclaration;
   update_epic_state: FunctionDeclaration;
+  query_knowledge: FunctionDeclaration;
 }

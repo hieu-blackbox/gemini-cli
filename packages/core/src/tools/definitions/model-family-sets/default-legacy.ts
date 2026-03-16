@@ -71,6 +71,9 @@ import {
   UPDATE_EPIC_STATE_TOOL_NAME,
   UPDATE_EPIC_STATE_PARAM_TYPE,
   UPDATE_EPIC_STATE_PARAM_CONTENT,
+  QUERY_KNOWLEDGE_TOOL_NAME,
+  QUERY_KNOWLEDGE_PARAM_QUERY,
+  QUERY_KNOWLEDGE_PARAM_LEVEL,
   TODOS_PARAM_TODOS,
   TODOS_ITEM_PARAM_DESCRIPTION,
   TODOS_ITEM_PARAM_STATUS,
@@ -622,6 +625,28 @@ Updates the situational awareness files for the active Epic.`,
         },
       },
       required: [UPDATE_EPIC_STATE_PARAM_TYPE, UPDATE_EPIC_STATE_PARAM_CONTENT],
+      additionalProperties: false,
+    },
+  },
+
+  query_knowledge: {
+    name: QUERY_KNOWLEDGE_TOOL_NAME,
+    description: `
+Searches the project-wide machine-learning index to answer "How have we handled X before?" or to find established local patterns and past decisions.`,
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        [QUERY_KNOWLEDGE_PARAM_QUERY]: {
+          type: 'string',
+          description: 'The search query or question about past learnings.',
+        },
+        [QUERY_KNOWLEDGE_PARAM_LEVEL]: {
+          type: 'string',
+          enum: ['global', 'project', 'micro', 'epic'],
+          description: 'Optional filter for the scope of the search.',
+        },
+      },
+      required: [QUERY_KNOWLEDGE_PARAM_QUERY],
       additionalProperties: false,
     },
   },

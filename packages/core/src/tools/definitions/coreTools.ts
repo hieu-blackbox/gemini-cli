@@ -86,6 +86,9 @@ export {
   UPDATE_EPIC_STATE_TOOL_NAME,
   UPDATE_EPIC_STATE_PARAM_TYPE,
   UPDATE_EPIC_STATE_PARAM_CONTENT,
+  QUERY_KNOWLEDGE_TOOL_NAME,
+  QUERY_KNOWLEDGE_PARAM_QUERY,
+  QUERY_KNOWLEDGE_PARAM_LEVEL,
   TODOS_PARAM_TODOS,
   TODOS_ITEM_PARAM_DESCRIPTION,
   TODOS_ITEM_PARAM_STATUS,
@@ -251,6 +254,13 @@ export const UPDATE_EPIC_STATE_DEFINITION: ToolDefinition = {
     return DEFAULT_LEGACY_SET.update_epic_state;
   },
   overrides: (modelId) => getToolSet(modelId).update_epic_state,
+};
+
+export const QUERY_KNOWLEDGE_DEFINITION: ToolDefinition = {
+  get base() {
+    return DEFAULT_LEGACY_SET.query_knowledge;
+  },
+  overrides: (modelId) => getToolSet(modelId).query_knowledge,
 };
 
 // ============================================================================

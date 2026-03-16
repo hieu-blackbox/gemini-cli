@@ -34,6 +34,7 @@ import { MemoryTool, setGeminiMdFilename } from '../tools/memoryTool.js';
 import { RecordLearningTool } from '../tools/recordLearningTool.js';
 import { RecordDecisionTool } from '../tools/recordDecisionTool.js';
 import { UpdateEpicStateTool } from '../tools/updateEpicStateTool.js';
+import { QueryKnowledgeTool } from '../tools/queryKnowledgeTool.js';
 import { WebSearchTool } from '../tools/web-search.js';
 import { AskUserTool } from '../tools/ask-user.js';
 import { ExitPlanModeTool } from '../tools/exit-plan-mode.js';
@@ -3068,6 +3069,9 @@ export class Config implements McpContext, AgentLoopContext {
     );
     maybeRegister(UpdateEpicStateTool, () =>
       registry.registerTool(new UpdateEpicStateTool(this, this.messageBus)),
+    );
+    maybeRegister(QueryKnowledgeTool, () =>
+      registry.registerTool(new QueryKnowledgeTool(this, this.messageBus)),
     );
     maybeRegister(WebSearchTool, () =>
       registry.registerTool(new WebSearchTool(this, this.messageBus)),

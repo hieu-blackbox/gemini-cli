@@ -78,6 +78,7 @@ import {
   isGemini2Model,
 } from '../config/models.js';
 import { AklDiscoveryService } from '../services/aklDiscoveryService.js';
+import { KnowledgeIndexingService } from '../services/knowledgeIndexingService.js';
 import { partToString } from '../utils/partUtils.js';
 import { coreEvents, CoreEvent } from '../utils/events.js';
 
@@ -245,6 +246,16 @@ export class GeminiClient {
   async initialize() {
     if (this.config.getAklEnabled()) {
       await this.runAklDiscovery();
+      // Update the knowledge index in the background
+      const indexer = new KnowledgeIndexingService(this.config);
+      indexer
+        .updateIndex()
+        .catch((err) =>
+          debugLogger.debug(
+            `AKL: Failed to update knowledge index: ${String(err)}`,
+          ),
+        );
+
       // Refresh memory to pick up newly discovered/created Epic files
       const { refreshServerHierarchicalMemory } = await import(
         '../utils/memoryDiscovery.js'

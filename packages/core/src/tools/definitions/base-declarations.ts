@@ -111,6 +111,11 @@ export const UPDATE_EPIC_STATE_TOOL_NAME = 'update_epic_state';
 export const UPDATE_EPIC_STATE_PARAM_TYPE = 'update_type';
 export const UPDATE_EPIC_STATE_PARAM_CONTENT = 'content';
 
+// -- query_knowledge --
+export const QUERY_KNOWLEDGE_TOOL_NAME = 'query_knowledge';
+export const QUERY_KNOWLEDGE_PARAM_QUERY = 'query';
+export const QUERY_KNOWLEDGE_PARAM_LEVEL = 'level';
+
 // -- get_internal_docs --
 export const GET_INTERNAL_DOCS_TOOL_NAME = 'get_internal_docs';
 export const DOCS_PARAM_PATH = 'path';
